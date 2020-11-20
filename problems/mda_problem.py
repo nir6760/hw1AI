@@ -79,13 +79,7 @@ class MDAState(GraphProblemState):
         #   (using equals `==` operator) because the class `Junction` explicitly
         #   implements the `__eq__()` method. The types `frozenset`, `ApartmentWithSymptomsReport`, `Laboratory`
         #   are also comparable (in the same manner).
-        if self.current_site == other.current_site :
-            if self.tests_on_ambulance==other.tests_on_ambulance:
-                if self.tests_transferred_to_lab == other.tests_transferred_to_lab:
-                    if self.nr_matoshim_on_ambulance == other.nr_matoshim_on_ambulance:
-                        if self.visited_labs == other.visited_labs:
-                            return True
-        return False
+        raise NotImplementedError  # TODO: remove this line.
 
     def __hash__(self):
         """
@@ -99,14 +93,14 @@ class MDAState(GraphProblemState):
 
     def get_total_nr_tests_taken_and_stored_on_ambulance(self) -> int:
         """
-        This method returns the total number of tests that are stored on the ambulance in this state.
+        This method returns the total number of of tests that are stored on the ambulance in this state.
         TODO [Ex.17]: Implement this method.
          Notice that this method can be implemented using a single line of code - do so!
          Use python's built-it `sum()` function.
          Notice that `sum()` can receive an *ITERATOR* as argument; That is, you can simply write something like this:
         >>> sum(<some expression using item> for item in some_collection_of_items)
         """
-        return sum(apartment.nr_roommates for apartment in self.tests_on_ambulance)
+        raise NotImplementedError  # TODO: remove this line.
 
 
 class MDAOptimizationObjective(Enum):
@@ -251,18 +245,7 @@ class MDAProblem(GraphProblem):
                                 its first `k` items and until the `n`-th item.
             You might find this tip useful for summing a slice of a collection.
         """
-        dist = self.map_distance_finder.get_map_cost_between(prev_state,succ_state)
-        distance_cost = dist
-        revisit_cost = int((type(succ_state.current_site)==Laboratory)and(succ_state.current_site in prev_state.visited_labs))*succ_state.current_site.revisit_extra_cost
-        transfer_cost = (type(succ_state.current_site)==Laboratory)*succ_state.current_site.tests_transfer_cost*prev_state.get_total_nr_tests_taken_and_stored_on_ambulance()
-        num_of_fridges = prev_state.get_total_nr_tests_taken_and_stored_on_ambulance()/self.problem_input.ambulance.fridge_capacity
-        num_of_fridges = int((not(num_of_fridges==int(num_of_fridges)))+num_of_fridges)
-        gas_cost = (dist/self.problem_input.ambulance.drive_gas_consumption_liter_per_meter+num_of_fridges)*\
-                   self.problem_input.gas_liter_price
-        monetary_cost = revisit_cost+transfer_cost+gas_cost
-        tests_travel_distance_cost = dist*prev_state.get_total_nr_tests_taken_and_stored_on_ambulance()
-        return MDACost(distance_cost,monetary_cost,tests_travel_distance_cost)
-
+        raise NotImplementedError  # TODO: remove this line!
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
@@ -299,9 +282,7 @@ class MDAProblem(GraphProblem):
                 generated set.
             Note: This method can be implemented using a single line of code. Try to do so.
         """
-        l = list(self.problem_input.reported_apartments-(state.tests_on_ambulance+state.tests_transferred_to_lab))
-        l.sort(key=lambda x:x.id)
-        return l
+        raise NotImplementedError  # TODO: remove this line!
 
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
