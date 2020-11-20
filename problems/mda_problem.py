@@ -78,7 +78,7 @@ class MDAState(GraphProblemState):
         #   (using equals `==` operator) because the class `Junction` explicitly
         #   implements the `__eq__()` method. The types `frozenset`, `ApartmentWithSymptomsReport`, `Laboratory`
         #   are also comparable (in the same manner).
-        if self.current_site == other.current_site:#h
+        if self.current_site == other.current_site:#hx
             if self.tests_on_ambulance == other.tests_on_ambulance:
                 if self.tests_transferred_to_lab == other.tests_transferred_to_lab:
                     if self.nr_matoshim_on_ambulance == other.nr_matoshim_on_ambulance:
