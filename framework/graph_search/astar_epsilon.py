@@ -58,7 +58,7 @@ class AStarEpsilon(AStar):
          order (small to big). Popping / peeking `open` returns the node with
          the smallest `f`.
         For each node (candidate) in the created focal, calculate its priority
-         by callingthe function `self.within_focal_priority_function` on it.
+         by calling the function `self.within_focal_priority_function` on it.
          This function expects to get 3 values: the node, the problem and the
          solver (self). You can create an array of these priority value. Then,
          use `np.argmin()` to find the index of the item (within this array)
@@ -72,4 +72,31 @@ class AStarEpsilon(AStar):
          for the extracted (and returned) node.
         """
 
-        raise NotImplementedError  # TODO: remove!
+        if self.open.is_empty():
+            return None
+        if self.max_focal_size == 0:
+            return None
+        min_node_in_open = self.open.peek_next_node()
+        max_expand_of_focal = min_node_in_open * (1 + self.focal_epsilon)
+        if self.max_focal_size is not None and self.max_focal_size <= max_expand_of_focal:
+            max_expand_of_focal = self.max_focal_size
+        focal_list_nodes = []
+        focal_list_priority = []
+        count_focal = 0
+
+        while (self.max_focal_size is not None and count_focal < self.max_focal_size) \
+                and not self.open.is_empty() and self.open.peek_next_node().expanding_priority <= max_expand_of_focal:
+            curr_node_out = self.open.pop_next_node()
+            focal_list_nodes.append(curr_node_out)  # create focal list
+            focal_list_priority.append(
+                self.within_focal_priority_function(curr_node_out, problem, self))  # create matching h_focal list
+            count_focal = count_focal + 1
+        index_of_min_focal = np.argmin(np.array(focal_list_priority))  # find the index in focal of next_to_expand
+        next_search_node_to_expand = focal_list_nodes[index_of_min_focal]
+        focal_list_nodes.pop(int(index_of_min_focal))
+        iter_focal = iter(focal_list_nodes)
+        for node_to_open in iter_focal:  # push the nodes back to OPEN, except the next_to_expand
+            self.open.push_node(node_to_open)
+        if self.use_close:
+            self.close.add_node(next_search_node_to_expand)
+        return next_search_node_to_expand

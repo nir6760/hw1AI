@@ -38,7 +38,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # See documentation here:
     # https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.plot.html
     # You can also Google for additional examples.
-    p1, = ax1.plot(weights, total_cost, 'b', label='Line 1')  # TODO: pass the relevant params instead of `...`.
+    p1, = ax1.plot(weights, total_cost, 'b-', label='Solution Cost')  # TODO: pass the relevant params instead of `...`.
 
     # ax1: Make the y-axis label, ticks and tick labels match the line color.
     ax1.set_ylabel('Solution cost', color='b')
@@ -52,7 +52,8 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # TODO: Make this curve colored red with solid line style.
     # TODO: Set its label to be '#Expanded states'.
 
-    p2, = ax2.plot(weights, total_nr_expanded, 'r', label='Line 1')  # TODO: pass the relevant params instead of `...`.
+    p2, = ax2.plot(weights, total_nr_expanded, 'r-',
+                   label='Solution Expanded states')  # TODO: pass the relevant params instead of `...`.
 
     # ax2: Make the y-axis label, ticks and tick labels match the line color.
     ax2.set_ylabel('#Expanded states', color='r')
@@ -179,7 +180,7 @@ def basic_mda_problem_experiments():
     # TODO: create an instance of `UniformCost`, solve the `small_mda_problem_with_distance_cost`
     #       with it and print the results.
 
-    #print(UniformCost().solve_problem(small_mda_problem_with_distance_cost))
+    print(UniformCost().solve_problem(small_mda_problem_with_distance_cost))
 
 
 def mda_problem_with_astar_experiments():
@@ -194,17 +195,17 @@ def mda_problem_with_astar_experiments():
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
 
 
-    #print(AStar(MDAMaxAirDistHeuristic).solve_problem(moderate_mda_problem_with_distance_cost))
+    print(AStar(MDAMaxAirDistHeuristic).solve_problem(moderate_mda_problem_with_distance_cost))
 
     # Ex.25
     # TODO: create an instance of `AStar` with the `MDASumAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
-    #print(AStar(MDASumAirDistHeuristic).solve_problem(moderate_mda_problem_with_distance_cost))
+    print(AStar(MDASumAirDistHeuristic).solve_problem(moderate_mda_problem_with_distance_cost))
 
     # Ex.28
     # TODO: create an instance of `AStar` with the `MDAMSTAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
-    #print(AStar(MDAMSTAirDistHeuristic).solve_problem(moderate_mda_problem_with_distance_cost))
+    print(AStar(MDAMSTAirDistHeuristic).solve_problem(moderate_mda_problem_with_distance_cost))
 
 def mda_problem_with_weighted_astar_experiments():
     print()
@@ -217,13 +218,13 @@ def mda_problem_with_weighted_astar_experiments():
     # TODO: Call here the function `run_astar_for_weights_in_range()`
     #       with `MDAMSTAirDistHeuristic`
     #       over the `small_mda_problem_with_distance_cost`.
-    #run_astar_for_weights_in_range(MDAMSTAirDistHeuristic,small_mda_problem_with_distance_cost)
+    run_astar_for_weights_in_range(MDAMSTAirDistHeuristic,small_mda_problem_with_distance_cost)
 
     # Ex.30
     # TODO: Call here the function `run_astar_for_weights_in_range()`
     #       with `MDASumAirDistHeuristic`
     #       over the `moderate_mda_problem_with_distance_cost`.
-    #run_astar_for_weights_in_range(MDASumAirDistHeuristic,moderate_mda_problem_with_distance_cost,)
+    run_astar_for_weights_in_range(MDASumAirDistHeuristic,moderate_mda_problem_with_distance_cost)
 
 
 def monetary_cost_objectives_mda_problem_experiments():
@@ -304,7 +305,11 @@ def mda_problem_with_astar_epsilon_experiments():
     #       Use focal_epsilon=0.23, and max_focal_size=40.
     #       Use within_focal_priority_function=within_focal_h_sum_priority_function. This function
     #        (defined just above) is internally using the `MDASumAirDistHeuristic`.
-    exit()  # TODO: remove!
+
+    aStarEpsilon = AStarEpsilon(MDASumAirDistHeuristic, within_focal_h_sum_priority_function(), focal_epsilon=0.23,
+                                max_focal_size=40)
+    res = aStarEpsilon.solve_problem(small_mda_problem_with_distance_cost)
+    print(res)
 
 
 def mda_problem_anytime_astar_experiments():
@@ -318,7 +323,9 @@ def mda_problem_anytime_astar_experiments():
     # TODO: create an instance of `AnytimeAStar` once with the `MDAMSTAirDistHeuristic`, with
     #       `max_nr_states_to_expand_per_iteration` set to 1000, solve the
     #       `moderate_mda_problem_with_distance_cost` with it and print the results.
-    exit()  # TODO: remove!
+    anyTimeAStar = AnytimeAStar(MDAMSTAirDistHeuristic, 1000)
+    res = anyTimeAStar.solve_problem(moderate_mda_problem_with_distance_cost)
+    print(res)
 
 
 def run_all_experiments():
