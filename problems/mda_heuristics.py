@@ -49,7 +49,10 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
         if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
 
-        return 10  # TODO: modify this line.
+        return max(self.cached_air_distance_calculator.get_air_distance_between_junctions(j1, j2)
+                   for j1 in all_certain_junctions_in_remaining_ambulance_path
+                   for j2 in all_certain_junctions_in_remaining_ambulance_path
+                   if j1 != j2)
 
 
 class MDASumAirDistHeuristic(HeuristicFunction):
@@ -91,8 +94,10 @@ class MDASumAirDistHeuristic(HeuristicFunction):
 
         if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
-
-        raise NotImplementedError  # TODO: remove this line and complete the missing part here!
+        return min(self.cached_air_distance_calculator.get_air_distance_between_junctions(j1, j2)
+                   for j1 in all_certain_junctions_in_remaining_ambulance_path
+                   for j2 in all_certain_junctions_in_remaining_ambulance_path
+                   if j1 != j2)
 
 
 class MDAMSTAirDistHeuristic(HeuristicFunction):
@@ -130,8 +135,14 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
               Use `nx.minimum_spanning_tree()` to get an MST. Calculate the MST size using the method
               `.size(weight='weight')`. Do not manually sum the edges' weights.
         """
-        raise NotImplementedError  # TODO: remove this line!
-
+        G = nx.Graph()
+        G.add_nodes_from(junctions)
+        G.add_weighted_edges_from([(src,dst,self.cached_air_distance_calculator.get_air_distance_between_junctions(src,dst))
+                                   for src in junctions
+                                   for dst in junctions
+                                   if src != dst])
+        MST = nx.minimum_spanning_tree(G)
+        return MST.size(weight='weight')
 
 class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
     heuristic_name = 'MDA-TimeObjectiveSumOfMinAirDistFromLab'
@@ -164,6 +175,10 @@ class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
             """
             Returns the distance between `junction` and the laboratory that is closest to `junction`.
             """
-            return min(...)  # TODO: replace `...` with the relevant implementation.
-
-        raise NotImplementedError  # TODO: remove this line!
+            return min(self.cached_air_distance_calculator.get_air_distance_between_junctions(junction, lab.location)
+                       for lab in self.problem.problem_input.laboratories)
+        j1 = state.current_site
+        if not isinstance(j1, Junction):
+            j1 = j1.location
+        return air_dist_to_closest_lab(j1)*state.get_total_nr_tests_taken_and_stored_on_ambulance() + \
+            sum(air_dist_to_closest_lab(apt.location)*apt.nr_roommates for apt in self.problem.get_reported_apartments_waiting_to_visit(state))
