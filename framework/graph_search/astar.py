@@ -51,7 +51,7 @@ class AStar(BestFirstSearch):
         """
         w = self.heuristic_weight
         return (1 - w) * search_node.g_cost + (
-                    w * self.heuristic_function_type.estimate(self.heuristic_function, search_node.state))
+                w * self.heuristic_function_type.estimate(self.heuristic_function, search_node.state))
 
     def _open_successor_node(self, problem: GraphProblem, successor_node: SearchNode):
         """
@@ -72,7 +72,7 @@ class AStar(BestFirstSearch):
         Remember: In A*, in contrast to uniform-cost, a successor state might have an already closed node,
                   but still could be improved.
         """
-        if successor_node.g_cost is None:
+        if successor_node.g_cost == float('inf'):
             return
         already_found_node_with_same_state = self.open.get_node_by_state(successor_node.state)
         if already_found_node_with_same_state is not None:  # A node with state s exists in OPEN
