@@ -92,12 +92,24 @@ class MDASumAirDistHeuristic(HeuristicFunction):
         all_certain_junctions_in_remaining_ambulance_path = \
             self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
 
-        if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
-            return 0
-        return min(self.cached_air_distance_calculator.get_air_distance_between_junctions(j1, j2)
-                   for j1 in all_certain_junctions_in_remaining_ambulance_path
-                   for j2 in all_certain_junctions_in_remaining_ambulance_path
-                   if j1 != j2)
+        j1 = state.current_site
+        if not isinstance(j1, Junction):
+            j1 = j1.location
+
+        if len(all_certain_junctions_in_remaining_ambulance_path) == 1:
+            return self.cached_air_distance_calculator.get_air_distance_between_junctions(j1,
+                                                                                          all_certain_junctions_in_remaining_ambulance_path[0])
+
+        def next_junc (j):
+            return min((self.cached_air_distance_calculator.get_air_distance_between_junctions(j, j2), j2)
+                           for j2 in all_certain_junctions_in_remaining_ambulance_path)
+        l = list()
+        while len(all_certain_junctions_in_remaining_ambulance_path)>0:
+            next_tupple = next_junc(j1)
+            l.append(next_tupple[0])
+            j1 = next_tupple[1]
+            all_certain_junctions_in_remaining_ambulance_path.remove(next_tupple[1])
+        return sum(l)
 
 
 class MDAMSTAirDistHeuristic(HeuristicFunction):

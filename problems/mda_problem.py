@@ -337,8 +337,8 @@ class MDAProblem(GraphProblem):
                 generated set.
             Note: This method can be implemented using a single line of code. Try to do so.
         """
-        l = sorted(list(frozenset.difference(frozenset(self.problem_input.reported_apartments),frozenset.union(state.tests_on_ambulance,state.tests_transferred_to_lab))),key=lambda x:x.report_id)
-        return l
+        return sorted(list(frozenset.difference(frozenset(self.problem_input.reported_apartments),frozenset.union(state.tests_on_ambulance,state.tests_transferred_to_lab))),key=lambda x:x.report_id)
+
 
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """

@@ -237,12 +237,12 @@ def monetary_cost_objectives_mda_problem_experiments():
     # Ex.32
     # TODO: create an instance of `UniformCost`
     #       solve the `small_mda_problem_with_monetary_cost` with it and print the results.
-    #print(UniformCost().solve_problem(small_mda_problem_with_monetary_cost))
+    print(UniformCost().solve_problem(small_mda_problem_with_monetary_cost))
 
     # Ex.32
     # TODO: create an instance of `UniformCost`
     #       solve the `moderate_mda_problem_with_monetary_cost` with it and print the results.
-    #print(UniformCost().solve_problem(moderate_mda_problem_with_monetary_cost))
+    print(UniformCost().solve_problem(moderate_mda_problem_with_monetary_cost))
 
 
 def multiple_objectives_mda_problem_experiments():
@@ -256,7 +256,7 @@ def multiple_objectives_mda_problem_experiments():
     # Ex.35
     # TODO: create an instance of `AStar` with the `MDATestsTravelDistToNearestLabHeuristic`,
     #       solve the `moderate_mda_problem_with_tests_travel_dist_cost` with it and print the results.
-    #print(AStar(MDATestsTravelDistToNearestLabHeuristic).solve_problem(moderate_mda_problem_with_tests_travel_dist_cost))
+    print(AStar(MDATestsTravelDistToNearestLabHeuristic).solve_problem(moderate_mda_problem_with_tests_travel_dist_cost))
 
     # Ex.38
     # TODO: Implement the algorithm A_2 described in this exercise in the assignment instructions.
@@ -274,9 +274,9 @@ def multiple_objectives_mda_problem_experiments():
     #          elsewhere next.
     #       Solve the `MDATestsTravelDistToNearestLabHeuristic` with it and print the results.
     eps = 0.6
-    optimal_distance_cost = AStar(MDAMSTAirDistHeuristic).solve_problem(moderate_mda_problem_with_distance_cost).solution_g_cost
+    optimal_distance_cost = AStar(MDAMSTAirDistHeuristic).solve_problem(moderate_mda_problem_with_distance_cost).solution_cost.distance_cost
     max_distance_cost = optimal_distance_cost*(1+eps)
-    print(AStar(MDATestsTravelDistToNearestLabHeuristic, open_criterion=lambda x: x.g_cost <= max_distance_cost)\
+    print(AStar(MDATestsTravelDistToNearestLabHeuristic, open_criterion=lambda x: x.cost.distance_cost <= max_distance_cost)\
           .solve_problem(moderate_mda_problem_with_tests_travel_dist_cost))
 
 
@@ -306,7 +306,7 @@ def mda_problem_with_astar_epsilon_experiments():
     #       Use within_focal_priority_function=within_focal_h_sum_priority_function. This function
     #        (defined just above) is internally using the `MDASumAirDistHeuristic`.
 
-    aStarEpsilon = AStarEpsilon(MDASumAirDistHeuristic, within_focal_h_sum_priority_function(), focal_epsilon=0.23,
+    aStarEpsilon = AStarEpsilon(MDASumAirDistHeuristic, within_focal_priority_function=within_focal_h_sum_priority_function, focal_epsilon=0.23,
                                 max_focal_size=40)
     res = aStarEpsilon.solve_problem(small_mda_problem_with_distance_cost)
     print(res)

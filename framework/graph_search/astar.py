@@ -72,31 +72,27 @@ class AStar(BestFirstSearch):
         Remember: In A*, in contrast to uniform-cost, a successor state might have an already closed node,
                   but still could be improved.
         """
-        if successor_node.operator_cost == float('inf'):
-            return
+        # if successor_node.operator_cost == float('inf'):
+        #    return
         if self.open.has_state(successor_node.state):  # A node with state s exists in OPEN
             already_found_node_with_same_state = self.open.get_node_by_state(successor_node.state)
-            if successor_node.expanding_priority < already_found_node_with_same_state.expanding_priority:  # New Parent is better
-                #already_found_node_with_same_state.cost = successor_node.cost
-                #already_found_node_with_same_state.parent_search_node = successor_node.parent_search_node
-                #already_found_node_with_same_state.expanding_priority = successor_node.expanding_priority
-                self.open.extract_node(already_found_node_with_same_state)
-                self.open.push_node(successor_node)
+            if successor_node.g_cost < already_found_node_with_same_state.g_cost:  # New Parent is better
 
-            else:  # old path is better, do nothing
-                return
+                self.open.extract_node(already_found_node_with_same_state) #remove old node from open
+                self.open.push_node(successor_node) #push the better node to open
+
+            # old path is better, do nothing
+
 
         else:  # state not in open, maybe in CLOSED
-            if self.close.has_state(successor_node.state):   # A node with state succ exists in CLOSED
+            if self.close.has_state(successor_node.state):  # A node with state succ exists in CLOSED
                 already_found_node_with_same_state = self.close.get_node_by_state(successor_node.state)
-                if successor_node.expanding_priority < already_found_node_with_same_state.expanding_priority:  # New parent is better
-                    #already_found_node_with_same_state.cost = successor_node.cost
-                    #already_found_node_with_same_state.parent_search_node = successor_node.parent_search_node
-                    #already_found_node_with_same_state.expanding_priority = successor_node.expanding_priority
-                    self.open.push_node(successor_node)  # move old node from CLOSED to OPEN
+                if successor_node.g_cost < already_found_node_with_same_state.g_cost:  # New parent is better
+
+                    self.open.push_node(successor_node)  # move better node to OPEN
                     self.close.remove_node(already_found_node_with_same_state)  # remove from CLOSED
-                else:  # old path is better, do nothing
-                    return
+                # old path is better, do nothing
+
 
             else:  # this is a new state - add node to OPEN
                 self.open.push_node(successor_node)
