@@ -200,7 +200,7 @@ def mda_problem_with_astar_experiments():
     # Ex.25
     # TODO: create an instance of `AStar` with the `MDASumAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
-    print(AStar(MDASumAirDistHeuristic).solve_problem(moderate_mda_problem_with_distance_cost))
+    #print(AStar(MDASumAirDistHeuristic).solve_problem(moderate_mda_problem_with_distance_cost))
 
     # Ex.28
     # TODO: create an instance of `AStar` with the `MDAMSTAirDistHeuristic`,
