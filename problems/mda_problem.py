@@ -8,7 +8,6 @@ from .map_heuristics import AirDistHeuristic
 from .cached_map_distance_finder import CachedMapDistanceFinder
 from .mda_problem_input import *
 
-
 __all__ = ['MDAState', 'MDACost', 'MDAProblem', 'MDAOptimizationObjective']
 
 
@@ -79,12 +78,12 @@ class MDAState(GraphProblemState):
         #   (using equals `==` operator) because the class `Junction` explicitly
         #   implements the `__eq__()` method. The types `frozenset`, `ApartmentWithSymptomsReport`, `Laboratory`
         #   are also comparable (in the same manner).
-        if self.current_site == other.current_site :
-            if self.tests_on_ambulance==other.tests_on_ambulance:
-                if self.tests_transferred_to_lab == other.tests_transferred_to_lab:
-                    if self.nr_matoshim_on_ambulance == other.nr_matoshim_on_ambulance:
-                        if self.visited_labs == other.visited_labs:
-                            return True
+        if self.current_site == other.current_site and \
+                self.tests_on_ambulance == other.tests_on_ambulance and \
+                self.tests_transferred_to_lab == other.tests_transferred_to_lab and \
+                self.nr_matoshim_on_ambulance == other.nr_matoshim_on_ambulance and \
+                self.visited_labs == other.visited_labs:
+            return True
         return False
 
     def __hash__(self):
@@ -224,7 +223,8 @@ class MDAProblem(GraphProblem):
             if lab not in state_to_expand.visited_labs:
                 new_state = MDAState(lab,
                                      frozenset(),
-                                     frozenset.union(state_to_expand.tests_transferred_to_lab,state_to_expand.tests_on_ambulance),
+                                     frozenset.union(state_to_expand.tests_transferred_to_lab,
+                                                     state_to_expand.tests_on_ambulance),
                                      state_to_expand.nr_matoshim_on_ambulance + lab.max_nr_matoshim,
                                      frozenset.union(state_to_expand.visited_labs, {lab}))
 
@@ -234,7 +234,8 @@ class MDAProblem(GraphProblem):
             elif len(state_to_expand.tests_on_ambulance):
                 new_state = MDAState(lab,
                                      frozenset(),
-                                     frozenset.union(state_to_expand.tests_transferred_to_lab , state_to_expand.tests_on_ambulance),
+                                     frozenset.union(state_to_expand.tests_transferred_to_lab,
+                                                     state_to_expand.tests_on_ambulance),
                                      state_to_expand.nr_matoshim_on_ambulance,
                                      state_to_expand.visited_labs)
                 yield OperatorResult(new_state,
@@ -242,8 +243,8 @@ class MDAProblem(GraphProblem):
                                      f"go to lab {lab.name}")
 
         for apt in self.get_reported_apartments_waiting_to_visit(state_to_expand):
-            if state_to_expand.nr_matoshim_on_ambulance >= apt.nr_roommates\
-                    and self.problem_input.ambulance.fridge_capacity*self.problem_input.ambulance.nr_fridges - state_to_expand.get_total_nr_tests_taken_and_stored_on_ambulance() \
+            if state_to_expand.nr_matoshim_on_ambulance >= apt.nr_roommates \
+                    and self.problem_input.ambulance.fridge_capacity * self.problem_input.ambulance.nr_fridges - state_to_expand.get_total_nr_tests_taken_and_stored_on_ambulance() \
                     >= apt.nr_roommates:
                 new_state = MDAState(apt,
                                      frozenset.union(state_to_expand.tests_on_ambulance, {apt}),
@@ -252,9 +253,6 @@ class MDAProblem(GraphProblem):
                                      state_to_expand.visited_labs)
                 yield OperatorResult(new_state, self.get_operator_cost(state_to_expand, new_state),
                                      f"visit {apt.reporter_name}")
-
-
-
 
     def get_operator_cost(self, prev_state: MDAState, succ_state: MDAState) -> MDACost:
         """
@@ -286,21 +284,27 @@ class MDAProblem(GraphProblem):
                                 its first `k` items and until the `n`-th item.
             You might find this tip useful for summing a slice of a collection.
         """
-        distance_cost = self.map_distance_finder.get_map_cost_between(prev_state.current_location,succ_state.current_location)
-        if not distance_cost:
-            return MDACost(float('inf'),float('inf'),float('inf'), self.optimization_objective)
-        num_of_fridges = round(prev_state.get_total_nr_tests_taken_and_stored_on_ambulance()/self.problem_input.ambulance.fridge_capacity+0.5)
-        fridges_gas = distance_cost*sum(self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:num_of_fridges])
-        drive_gas = distance_cost*self.problem_input.ambulance.drive_gas_consumption_liter_per_meter
-        gas_cost = self.problem_input.gas_liter_price*(fridges_gas+drive_gas)
+        distance_cost = self.map_distance_finder.get_map_cost_between(prev_state.current_location,
+                                                                      succ_state.current_location)
+        if distance_cost is None:
+            return MDACost(float('inf'), float('inf'), float('inf'), self.optimization_objective)
+        total_on_Ambulance = prev_state.get_total_nr_tests_taken_and_stored_on_ambulance()
+        num_of_fridges = math.ceil(total_on_Ambulance / self.problem_input.ambulance.fridge_capacity)
+        if num_of_fridges < 1:
+            fridges_gas = 0
+        else:
+            fridges_gas = sum(self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:num_of_fridges])
+        drive_gas = self.problem_input.ambulance.drive_gas_consumption_liter_per_meter
+        gas_cost = self.problem_input.gas_liter_price * (fridges_gas + drive_gas) * distance_cost
         monetary_cost = gas_cost
-        if isinstance(succ_state,Laboratory):
-            if succ_state.current_site in prev_state.visited_labs:
-                monetary_cost+= succ_state.current_site.revisit_extra_cost
-            monetary_cost+= succ_state.current_site.tests_transfer_cost*prev_state.get_total_nr_tests_taken_and_stored_on_ambulance()
-        tests_travel_distance_cost = distance_cost*prev_state.get_total_nr_tests_taken_and_stored_on_ambulance()
-        return MDACost(distance_cost,monetary_cost,tests_travel_distance_cost, self.optimization_objective)
-
+        if isinstance(succ_state.current_site, Laboratory):
+            if total_on_Ambulance > 0:
+                monetary_cost += succ_state.current_site.tests_transfer_cost
+            lab_revisit_cost = succ_state.current_site.revisit_extra_cost if succ_state.current_site in prev_state.visited_labs \
+                else 0
+            monetary_cost += lab_revisit_cost
+        tests_travel_distance_cost = distance_cost * total_on_Ambulance
+        return MDACost(distance_cost, monetary_cost, tests_travel_distance_cost, self.optimization_objective)
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
@@ -310,7 +314,8 @@ class MDAProblem(GraphProblem):
          In order to create a set from some other collection (list/tuple) you can just `set(some_other_collection)`.
         """
         assert isinstance(state, MDAState)
-        return self.get_reported_apartments_waiting_to_visit(state) == list() and isinstance(state.current_site,Laboratory)
+        return self.get_reported_apartments_waiting_to_visit(state) == list() and isinstance(state.current_site,
+                                                                                             Laboratory)
 
     def get_zero_cost(self) -> Cost:
         """
@@ -337,8 +342,10 @@ class MDAProblem(GraphProblem):
                 generated set.
             Note: This method can be implemented using a single line of code. Try to do so.
         """
-        return sorted(list(frozenset.difference(frozenset(self.problem_input.reported_apartments),frozenset.union(state.tests_on_ambulance,state.tests_transferred_to_lab))),key=lambda x:x.report_id)
-
+        return sorted(list(frozenset.difference(frozenset(self.problem_input.reported_apartments),
+                                                frozenset.union(state.tests_on_ambulance,
+                                                                state.tests_transferred_to_lab))),
+                      key=lambda x: x.report_id)
 
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
@@ -351,7 +358,7 @@ class MDAProblem(GraphProblem):
             Use python's `sorted(some_list, key=...)` function.
         """
         apts = [apt.location for apt in self.get_reported_apartments_waiting_to_visit(state)]
-        if isinstance(state.current_site, (Laboratory,ApartmentWithSymptomsReport)):
+        if isinstance(state.current_site, (Laboratory, ApartmentWithSymptomsReport)):
             apts.append(state.current_site.location)
         else:
             apts.append(state.current_site)

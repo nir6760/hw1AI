@@ -6,7 +6,6 @@ from framework import *
 from .mda_problem import *
 from .cached_air_distance_calculator import CachedAirDistanceCalculator
 
-
 __all__ = ['MDAMaxAirDistHeuristic', 'MDASumAirDistHeuristic',
            'MDAMSTAirDistHeuristic', 'MDATestsTravelDistToNearestLabHeuristic']
 
@@ -95,16 +94,22 @@ class MDASumAirDistHeuristic(HeuristicFunction):
         j1 = state.current_site
         if not isinstance(j1, Junction):
             j1 = j1.location
+        if state.current_site in all_certain_junctions_in_remaining_ambulance_path:
+            all_certain_junctions_in_remaining_ambulance_path.remove(state.current_site)
 
-        if len(all_certain_junctions_in_remaining_ambulance_path) == 1:
-            return self.cached_air_distance_calculator.get_air_distance_between_junctions(j1,
-                                                                                          all_certain_junctions_in_remaining_ambulance_path[0])
+        if len(all_certain_junctions_in_remaining_ambulance_path) == 0:
+            return 0
+        # if len(all_certain_junctions_in_remaining_ambulance_path) == 1:
+        #    return self.cached_air_distance_calculator.get_air_distance_between_junctions(j1,
+        #                                                                                 all_certain_junctions_in_remaining_ambulance_path[
+        #                                                                                    0])
 
-        def next_junc (j):
-            return min((self.cached_air_distance_calculator.get_air_distance_between_junctions(j, j2), j2)
-                           for j2 in all_certain_junctions_in_remaining_ambulance_path)
+        def next_junc(j):
+            return min(((self.cached_air_distance_calculator.get_air_distance_between_junctions(j, j2), j2)
+                        for j2 in all_certain_junctions_in_remaining_ambulance_path), key=lambda x: (x[0], x[1].index))
+
         l = list()
-        while len(all_certain_junctions_in_remaining_ambulance_path)>0:
+        while len(all_certain_junctions_in_remaining_ambulance_path) > 0:
             next_tupple = next_junc(j1)
             l.append(next_tupple[0])
             j1 = next_tupple[1]
@@ -149,12 +154,14 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
         """
         G = nx.Graph()
         G.add_nodes_from(junctions)
-        G.add_weighted_edges_from([(src,dst,self.cached_air_distance_calculator.get_air_distance_between_junctions(src,dst))
-                                   for src in junctions
-                                   for dst in junctions
-                                   if src != dst])
+        G.add_weighted_edges_from(
+            [(src, dst, self.cached_air_distance_calculator.get_air_distance_between_junctions(src, dst))
+             for src in junctions
+             for dst in junctions
+             if src != dst])
         MST = nx.minimum_spanning_tree(G)
         return MST.size(weight='weight')
+
 
 class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
     heuristic_name = 'MDA-TimeObjectiveSumOfMinAirDistFromLab'
@@ -189,8 +196,10 @@ class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
             """
             return min(self.cached_air_distance_calculator.get_air_distance_between_junctions(junction, lab.location)
                        for lab in self.problem.problem_input.laboratories)
+
         j1 = state.current_site
         if not isinstance(j1, Junction):
             j1 = j1.location
-        return air_dist_to_closest_lab(j1)*state.get_total_nr_tests_taken_and_stored_on_ambulance() + \
-            sum(air_dist_to_closest_lab(apt.location)*apt.nr_roommates for apt in self.problem.get_reported_apartments_waiting_to_visit(state))
+        return air_dist_to_closest_lab(j1) * state.get_total_nr_tests_taken_and_stored_on_ambulance() + \
+               sum(air_dist_to_closest_lab(apt.location) * apt.nr_roommates for apt in
+                   self.problem.get_reported_apartments_waiting_to_visit(state))
